@@ -37,8 +37,4 @@ ENV CACHE_FOLDER=/runpod-volume/.cache/tribev2
 ENV UV_TOOL_DIR=/runpod-volume/.cache/uv-tools
 ENV UV_CACHE_DIR=/runpod-volume/.cache/uv-cache
 
-# HF download performance
-ENV HF_HUB_ENABLE_HF_TRANSFER=1
-ENV HF_XET_HIGH_PERFORMANCE=1
-
 CMD ["python3", "-u", "/src/handler.py"]
