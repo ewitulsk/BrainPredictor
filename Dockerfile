@@ -11,6 +11,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt /requirements.txt
 RUN pip install --no-cache-dir -r /requirements.txt
 
+# Install uv — tribev2 invokes WhisperX via `uvx whisperx ...` for transcription
+RUN pip install --no-cache-dir uv
+
 # Ensure python3 points to the same interpreter pip uses
 RUN ln -sf $(which python3.13) /usr/bin/python3
 
@@ -32,5 +35,10 @@ WORKDIR /src
 ENV HF_HOME=/cache/huggingface
 ENV TORCH_HOME=/cache/torch
 ENV CACHE_FOLDER=/cache
+
+# uv's tool and wheel caches on the Network Volume — WhisperX gets installed
+# here on first use and reused on subsequent cold starts
+ENV UV_TOOL_DIR=/cache/uv-tools
+ENV UV_CACHE_DIR=/cache/uv-cache
 
 CMD ["python3", "-u", "/src/handler.py"]
