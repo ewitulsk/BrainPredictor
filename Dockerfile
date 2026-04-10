@@ -11,11 +11,11 @@ COPY requirements.txt /requirements.txt
 RUN pip install --no-cache-dir -r /requirements.txt
 
 # Download spaCy English model
-RUN python -m spacy download en_core_web_sm
+RUN python3 -m spacy download en_core_web_sm
 
 # Pre-download TRIBE v2 checkpoint (~709MB) into the image
 # This avoids re-downloading on every cold start
-RUN python -c "\
+RUN python3 -c "\
 from tribev2.demo_utils import TribeModel; \
 TribeModel.from_pretrained('facebook/tribev2', cache_folder='/baked_models')"
 
@@ -29,4 +29,4 @@ ENV HF_HOME=/cache/huggingface
 ENV TORCH_HOME=/cache/torch
 ENV CACHE_FOLDER=/cache
 
-CMD ["python", "-u", "/src/handler.py"]
+CMD ["python3", "-u", "/src/handler.py"]
