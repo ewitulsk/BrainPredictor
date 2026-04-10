@@ -20,25 +20,25 @@ RUN ln -sf $(which python3.13) /usr/bin/python3
 # Download spaCy English model
 RUN python3 -m spacy download en_core_web_sm
 
-# Pre-download TRIBE v2 checkpoint (~709MB) into the image
-# This avoids re-downloading on every cold start
-RUN python3 -c "\
-from tribev2.demo_utils import TribeModel; \
-TribeModel.from_pretrained('facebook/tribev2', cache_folder='/baked_models')"
-
 # Copy handler code
 COPY src/ /src/
 WORKDIR /src
 
-# Cache directories — use /cache for runtime model downloads (Network Volume mount point)
-# /baked_models contains the pre-downloaded TRIBE checkpoint
-ENV HF_HOME=/cache/huggingface
-ENV TORCH_HOME=/cache/torch
-ENV CACHE_FOLDER=/cache
+# All caches live on the RunPod Network Volume (mounted at /runpod-volume in serverless).
+# Persists across cold starts — HF models, torch, uv tools, and WhisperX all survive restarts.
+ENV XDG_CACHE_HOME=/runpod-volume/.cache
+ENV HF_HOME=/runpod-volume/.cache/huggingface
+ENV TORCH_HOME=/runpod-volume/.cache/torch
+ENV PIP_CACHE_DIR=/runpod-volume/.cache/pip
+ENV CACHE_FOLDER=/runpod-volume/.cache/tribev2
 
-# uv's tool and wheel caches on the Network Volume — WhisperX gets installed
-# here on first use and reused on subsequent cold starts
-ENV UV_TOOL_DIR=/cache/uv-tools
-ENV UV_CACHE_DIR=/cache/uv-cache
+# uv's tool and wheel caches on the Network Volume — WhisperX gets installed here
+# on first cold start (~10 GB) and reused on every subsequent start.
+ENV UV_TOOL_DIR=/runpod-volume/.cache/uv-tools
+ENV UV_CACHE_DIR=/runpod-volume/.cache/uv-cache
+
+# HF download performance
+ENV HF_HUB_ENABLE_HF_TRANSFER=1
+ENV HF_XET_HIGH_PERFORMANCE=1
 
 CMD ["python3", "-u", "/src/handler.py"]
