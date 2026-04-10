@@ -7,8 +7,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
+# pip installs into python3.13 on this base image
 COPY requirements.txt /requirements.txt
 RUN pip install --no-cache-dir -r /requirements.txt
+
+# Ensure python3 points to the same interpreter pip uses
+RUN ln -sf $(which python3.13) /usr/bin/python3
 
 # Download spaCy English model
 RUN python3 -m spacy download en_core_web_sm
