@@ -1,0 +1,59 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/basetenlabs/truss/main/truss/config.schema.json
+model_name: tribe-v2
+python_version: py311
+
+requirements:
+  - tribev2 @ git+https://github.com/facebookresearch/tribev2.git
+  - numpy
+  - requests
+  - huggingface_hub
+
+system_packages:
+  - ffmpeg
+  - libsndfile1
+  - curl
+
+environment_variables:
+  HF_HOME: /app/hf_cache
+  TORCH_HOME: /app/torch_cache
+  CACHE_FOLDER: /app/model_cache/tribev2
+  # runpod/base sets HF_HUB_ENABLE_HF_TRANSFER=1 which breaks the uvx whisperx
+  # subprocess (its isolated env lacks the hf_transfer package). Force off.
+  HF_HUB_ENABLE_HF_TRANSFER: "0"
+  # So `uvx whisperx` finds the build-time-baked tool install instead of reinstalling
+  UV_TOOL_DIR: /opt/uv-tools
+  UV_CACHE_DIR: /tmp/uv-cache
+
+secrets:
+  hf_access_token: null  # value set in Baseten UI; required for gated LLaMA 3.2
+
+resources:
+  accelerator: H100
+  cpu: "8"
+  memory: 64Gi
+  use_gpu: true
+
+runtime:
+  predict_concurrency: 1
+  streaming_read_timeout: 600
+  health_checks:
+    startup_threshold_seconds: 3000  # load() may need to download ~15 GB on first cold start
+
+build_commands:
+  # Install uv so tribev2's `uvx whisperx ...` subprocess works at runtime
+  - curl -LsSf https://astral.sh/uv/install.sh | sh
+  - mv /root/.local/bin/uv /usr/local/bin/uv && mv /root/.local/bin/uvx /usr/local/bin/uvx
+  # Pre-install whisperx as an isolated uv tool so cold starts don't re-resolve ~10 GB of deps
+  - UV_TOOL_DIR=/opt/uv-tools UV_CACHE_DIR=/tmp/uv-cache uv tool install whisperx && rm -rf /tmp/uv-cache
+  # spaCy model used by tribev2's text transforms
+  - python -m spacy download en_core_web_sm
+
+# Pre-fetch the TRIBE checkpoint to a Baseten distributed volume so it's not
+# re-downloaded on every cold start. Feature extractors (LLaMA, V-JEPA2, W2V-BERT)
+# are loaded lazily by tribev2 itself into HF_HOME on first predict.
+model_cache:
+  - repo_id: facebook/tribev2
+    revision: f894e783020944dcd96e5568550afe2aa9743f9f
+    kind: hf
+    use_volume: true
+    volume_folder: tribev2
