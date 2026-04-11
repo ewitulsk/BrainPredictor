@@ -38,6 +38,8 @@ runtime:
   streaming_read_timeout: 600
   health_checks:
     startup_threshold_seconds: 3000  # load() may need to download ~15 GB on first cold start
+    restart_threshold_seconds: 3000  # don't kill the pod for liveness during slow init
+    stop_traffic_threshold_seconds: 3000
 
 build_commands:
   # Install uv via pip so uv/uvx land in /usr/local/bin (deterministic, HOME-independent)

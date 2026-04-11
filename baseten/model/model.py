@@ -45,12 +45,21 @@ class Model:
         from tribev2.demo_utils import TribeModel
 
         cache_folder = Path(os.environ.get("CACHE_FOLDER", "/app/model_cache/tribev2"))
-        logger.info("Loading TRIBE v2 from cache_folder=%s", cache_folder)
+        # Pass the LOCAL cache dir as checkpoint_dir so from_pretrained reads
+        # config.yaml + best.ckpt straight off disk instead of re-downloading
+        # via hf_hub_download (which hung silently on xet for 28+ min).
+        checkpoint_dir = cache_folder
+        logger.info(
+            "Loading TRIBE v2 from checkpoint_dir=%s (contents: %s)",
+            checkpoint_dir,
+            sorted(p.name for p in checkpoint_dir.iterdir()) if checkpoint_dir.exists() else "MISSING",
+        )
+        logger.info("Calling TribeModel.from_pretrained...")
         self._model = TribeModel.from_pretrained(
-            "facebook/tribev2",
+            checkpoint_dir,
             cache_folder=cache_folder,
         )
-        logger.info("TRIBE v2 loaded")
+        logger.info("TRIBE v2 loaded successfully")
 
     def predict(self, model_input: dict) -> dict:
         """Input (exactly one of video_url, audio_url, text required):
