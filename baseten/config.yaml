@@ -40,9 +40,8 @@ runtime:
     startup_threshold_seconds: 3000  # load() may need to download ~15 GB on first cold start
 
 build_commands:
-  # Install uv so tribev2's `uvx whisperx ...` subprocess works at runtime
-  - curl -LsSf https://astral.sh/uv/install.sh | sh
-  - mv /root/.local/bin/uv /usr/local/bin/uv && mv /root/.local/bin/uvx /usr/local/bin/uvx
+  # Install uv via pip so uv/uvx land in /usr/local/bin (deterministic, HOME-independent)
+  - pip install --no-cache-dir uv
   # Pre-install whisperx as an isolated uv tool so cold starts don't re-resolve ~10 GB of deps
   - UV_TOOL_DIR=/opt/uv-tools UV_CACHE_DIR=/tmp/uv-cache uv tool install whisperx && rm -rf /tmp/uv-cache
   # spaCy model used by tribev2's text transforms
