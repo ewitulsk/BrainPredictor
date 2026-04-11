@@ -26,6 +26,9 @@ os.environ.setdefault("UV_CACHE_DIR", "/tmp/uv-cache")
 class Model:
     def __init__(self, **kwargs):
         self._secrets = kwargs.get("secrets") or {}
+        # Required by Baseten when model_cache is used — the runtime passes this
+        # in kwargs and enforces that we call block_until_download_complete().
+        self._lazy_data_resolver = kwargs.get("lazy_data_resolver")
         self._model = None
 
     def load(self):
@@ -36,11 +39,12 @@ class Model:
             os.environ["HUGGING_FACE_HUB_TOKEN"] = token
 
         # Block until model_cache prefetch finishes before touching the files.
-        try:
-            from truss.base import lazy_data_resolver
-            lazy_data_resolver.block_until_download_complete()
-        except Exception as e:
-            logger.warning("lazy_data_resolver not available or failed: %s", e)
+        if self._lazy_data_resolver is not None:
+            logger.info("Waiting for lazy_data_resolver to finish downloads...")
+            self._lazy_data_resolver.block_until_download_complete()
+            logger.info("lazy_data_resolver downloads complete")
+        else:
+            logger.warning("lazy_data_resolver kwarg not provided")
 
         from tribev2.demo_utils import TribeModel
 
