@@ -45,7 +45,7 @@ build_commands:
   # Pre-install whisperx as an isolated uv tool so cold starts don't re-resolve ~10 GB of deps
   - UV_TOOL_DIR=/opt/uv-tools UV_CACHE_DIR=/tmp/uv-cache uv tool install whisperx && rm -rf /tmp/uv-cache
   # spaCy model used by tribev2's text transforms
-  - python -m spacy download en_core_web_sm
+  - python3 -m spacy download en_core_web_sm
 
 # Pre-fetch the TRIBE checkpoint to a Baseten distributed volume so it's not
 # re-downloaded on every cold start. Feature extractors (LLaMA, V-JEPA2, W2V-BERT)
