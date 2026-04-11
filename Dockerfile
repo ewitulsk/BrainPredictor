@@ -37,4 +37,9 @@ ENV CACHE_FOLDER=/runpod-volume/.cache/tribev2
 ENV UV_TOOL_DIR=/runpod-volume/.cache/uv-tools
 ENV UV_CACHE_DIR=/runpod-volume/.cache/uv-cache
 
+# runpod/base sets HF_HUB_ENABLE_HF_TRANSFER=1 by default, but the isolated
+# `uvx whisperx` env that tribev2 spawns doesn't include the hf_transfer package,
+# so downloads crash. Force it off container-wide.
+ENV HF_HUB_ENABLE_HF_TRANSFER=0
+
 CMD ["python3", "-u", "/src/handler.py"]
