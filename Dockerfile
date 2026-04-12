@@ -22,8 +22,8 @@ RUN pip install --no-cache-dir -r /requirements.txt
 # Install uv — tribev2 invokes WhisperX via `uvx whisperx ...` for transcription
 RUN pip install --no-cache-dir uv
 
-# Ensure python3 points to the same interpreter pip uses
-RUN ln -sf $(which python3) /usr/bin/python3 || true
+# Ensure python3 exists — new base images may only provide `python`
+RUN which python3 || ln -sf $(which python) /usr/bin/python3
 
 # Download spaCy English model
 RUN python3 -m spacy download en_core_web_sm
@@ -51,3 +51,4 @@ ENV UV_CACHE_DIR=/runpod-volume/.cache/uv-cache
 ENV HF_HUB_ENABLE_HF_TRANSFER=0
 
 CMD ["python3", "-u", "/src/handler.py"]
+# Note: python3 symlink is created above if the base image only ships `python`
