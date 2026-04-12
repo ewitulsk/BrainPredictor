@@ -1,4 +1,4 @@
-FROM runpod/base:0.6.3-cuda12.1.0
+FROM runpod/base:1.0.3-cuda1281-ubuntu2204
 
 # System dependencies for video/audio processing
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -6,8 +6,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libsndfile1 \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
-# pip installs into python3.13 on this base image
+# Phase 1: PyTorch with CUDA 12.8 — supports both H100 (sm_90) and Blackwell (sm_120)
+RUN pip install --no-cache-dir \
+    torch torchvision \
+    --index-url https://download.pytorch.org/whl/cu128
+
+# Phase 2: Install tribev2 with --no-deps to bypass its stale torch<2.7 pin
+RUN pip install --no-cache-dir --no-deps \
+    "tribev2 @ git+https://github.com/facebookresearch/tribev2.git"
+
+# Phase 3: Install tribev2's remaining deps + our requirements
 COPY requirements.txt /requirements.txt
 RUN pip install --no-cache-dir -r /requirements.txt
 
@@ -15,7 +23,7 @@ RUN pip install --no-cache-dir -r /requirements.txt
 RUN pip install --no-cache-dir uv
 
 # Ensure python3 points to the same interpreter pip uses
-RUN ln -sf $(which python3.13) /usr/bin/python3
+RUN ln -sf $(which python3) /usr/bin/python3 || true
 
 # Download spaCy English model
 RUN python3 -m spacy download en_core_web_sm

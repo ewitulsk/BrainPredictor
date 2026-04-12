@@ -1,4 +1,20 @@
 runpod>=1.7.0
-tribev2 @ git+https://github.com/facebookresearch/tribev2.git
 boto3>=1.34
 requests>=2.31
+
+# tribev2 runtime deps (torch/torchvision installed separately in Dockerfile)
+neuralset==0.0.2
+neuraltrain==0.0.2
+numpy==2.2.6
+x_transformers==1.27.20
+einops
+pyyaml
+moviepy>=2.2.1
+huggingface_hub
+gtts
+langdetect
+spacy
+soundfile
+Levenshtein
+julius
+transformers
